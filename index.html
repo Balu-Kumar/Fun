@@ -43,7 +43,7 @@
     <p>I'm thinking of a number between 1 and 100. Can you guess it?</p>
 
     <input type="number" id="guess" placeholder="Enter a number">
-    <button onclick="checkGuess()">Submit</button>
+    <button id="submitBtn">Submit</button>
     <p id="message"></p>
 
     <script>
@@ -55,13 +55,38 @@
         }
 
         function checkGuess() {
-            let userGuess = parseInt(document.getElementById("guess").value);
+            let guessInput = document.getElementById("guess");
+            let userGuess = parseInt(guessInput.value);
+            let messageElement = document.getElementById("message");
             attempts++;
 
             if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
-                document.getElementById("message").innerText = "❌ Please enter a valid number between 1 and 100!";
+                messageElement.innerText = "❌ Please enter a valid number between 1 and 100!";
                 return;
             }
 
             if (userGuess === randomNumber) {
-                document.getElementById("message").innerText = `🎉 C
+                messageElement.innerText = `🎉 Correct! The number was ${randomNumber}. You guessed it in ${attempts} tries!`;
+                return;
+            }
+
+            let hint = "";
+
+            if (attempts % 3 === 0) { // Every 3rd attempt, show high or low
+                hint = userGuess < randomNumber ? "📉 Too low!" : "📈 Too high!";
+            } else { // Otherwise, give odd/even or perfect square hint
+                hint = (randomNumber % 2 === 0) ? "🔢 It's an even number!" : "🔢 It's an odd number!";
+                
+                if (Math.random() < 0.5) { // 50% chance to say perfect square
+                    hint += isPerfectSquare(randomNumber) ? " 🟢 It's a perfect square!" : " ❌ Not a perfect square!";
+                }
+            }
+
+            messageElement.innerText = hint;
+        }
+
+        document.getElementById("submitBtn").addEventListener("click", checkGuess);
+    </script>
+
+</body>
+</html>
