@@ -5,151 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guess the Number Game</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            color: #333;
-        }
-        input {
-            padding: 10px;
-            font-size: 16px;
-            width: 100px;
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007BFF;
-            color: white;
-        }
-        #message {
-            margin-top: 20px;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        #timer {
-            font-size: 18px;
-            color: red;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background-color: #f4f4f4; }
+        h1 { color: #333; }
+        input { padding: 10px; font-size: 16px; width: 100px; text-align: center; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #007BFF; color: white; }
+        #message, #timer, #leaderboard { font-size: 18px; margin-top: 10px; }
+        .hints-container { text-align: left; margin: auto; width: 50%; }
+        .hint { font-size: 18px; margin-top: 5px; }
+        .hint-vanish { font-size: 18px; font-weight: bold; transition: opacity 1s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <h1>🎯 Guess the Number Game! 🎲</h1>
-    <p>Choose a difficulty level:</p>
-    <button onclick="setDifficulty(50)">Easy (1-50)</button>
-    <button onclick="setDifficulty(100)">Medium (1-100)</button>
-    <button onclick="setDifficulty(500)">Hard (1-500)</button>
-
-    <p id="difficultyText"></p>
-    <p id="timer"></p>
-
+    <h1>Guess the Number Game</h1>
+    <p>Select Difficulty:</p>
+    <select id="difficulty" onchange="setDifficulty()">
+        <option value="easy">Easy (1-50, 60s)</option>
+        <option value="medium" selected>Medium (1-100, 120s)</option>
+        <option value="hard">Hard (1-200, 180s)</option>
+    </select>
+    
+    <p>Guess a number:</p>
     <input type="number" id="guess" placeholder="Enter a number">
-    <button id="submitBtn">Submit</button>
+    <button onclick="checkGuess()">Submit</button>
+    
     <p id="message"></p>
-    <p>🎖️ Best Score: <span id="bestScore">-</span> attempts</p>
+    <p id="timer">Time Left: 120s</p>
 
-    <button id="playAgain" onclick="resetGame()" style="display:none;">🔄 Play Again</button>
+    <div class="hints-container">
+        <p class="hint" id="hint1"></p>
+        <p class="hint" id="hint2"></p>
+        <p class="hint" id="hint4"></p>
+        <p class="hint" id="hint5"></p>
+        <p class="hint-vanish" id="hint3" style="display:none;"></p>
+    </div>
+    
+    <button id="playAgain" onclick="resetGame()" style="display:none;">Play Again</button>
+    
+    <h2>Leaderboard</h2>
+    <p id="leaderboard">No records yet.</p>
 
     <script>
         let maxNumber = 100;
-        let randomNumber;
+        let randomNumber = Math.floor(Math.random() * maxNumber) + 1;
         let attempts = 0;
-        let bestScore = localStorage.getItem("bestScore") || "-";
         let timer;
-        let timeLeft = 60;
-        let gameActive = false;
+        let timeLeft = 120;
+        let leaderboard = [];
 
-        document.getElementById("bestScore").innerText = bestScore;
-
-        function setDifficulty(max) {
-            maxNumber = max;
+        function setDifficulty() {
+            let level = document.getElementById("difficulty").value;
+            if (level === "easy") { maxNumber = 50; timeLeft = 60; }
+            else if (level === "medium") { maxNumber = 100; timeLeft = 120; }
+            else { maxNumber = 200; timeLeft = 180; }
             resetGame();
-            document.getElementById("difficultyText").innerText = `Difficulty: Guess a number between 1 and ${maxNumber}`;
-            gameActive = true;
         }
 
         function startTimer() {
             clearInterval(timer);
-            timeLeft = 60;
-            document.getElementById("timer").innerText = `⏳ Time Left: ${timeLeft}s`;
             timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById("timer").innerText = `⏳ Time Left: ${timeLeft}s`;
-                if (timeLeft <= 0) {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
+                } else {
                     clearInterval(timer);
-                    document.getElementById("message").innerText = "⏰ Time's up! You lost!";
-                    gameActive = false;
+                    document.getElementById("message").innerText = "⏳ Time's up! You lost!";
                     document.getElementById("playAgain").style.display = "inline";
                 }
             }, 1000);
         }
 
-        function isPerfectSquare(num) {
-            return Number.isInteger(Math.sqrt(num));
-        }
-
         function checkGuess() {
-            if (!gameActive) return;
-
             let userGuess = parseInt(document.getElementById("guess").value);
-            let messageElement = document.getElementById("message");
+            let message = document.getElementById("message");
             attempts++;
 
             if (isNaN(userGuess) || userGuess < 1 || userGuess > maxNumber) {
-                messageElement.innerText = "❌ Please enter a valid number!";
+                message.innerText = `Enter a number between 1 and ${maxNumber}!`;
                 return;
             }
+
+            if (attempts === 1) startTimer();
 
             if (userGuess === randomNumber) {
                 clearInterval(timer);
-                messageElement.innerText = `🎉 Correct! The number was ${randomNumber}. You guessed it in ${attempts} tries!`;
+                message.innerText = `Correct! The number was ${randomNumber}. Attempts: ${attempts}. Time Left: ${timeLeft}s`;
+                updateLeaderboard(timeLeft);
                 document.getElementById("playAgain").style.display = "inline";
-                gameActive = false;
-
-                if (bestScore === "-" || attempts < bestScore) {
-                    localStorage.setItem("bestScore", attempts);
-                    document.getElementById("bestScore").innerText = attempts;
-                }
                 return;
             }
 
-            let hint = "";
-            if (attempts === 1) {
-                hint = (randomNumber % 2 === 0) ? "🔢 It's even!" : "🔢 It's odd!";
-            } else if (attempts === 2) {
-                hint = isPerfectSquare(randomNumber) ? "🟢 It's a perfect square!" : "❌ Not a perfect square!";
-            } else {
-                hint = userGuess < randomNumber ? "📉 Too low!" : "📈 Too high!";
-            }
+            document.getElementById("hint1").innerText = `Hint 1: ${randomNumber % 2 === 0 ? "Even" : "Odd"}`;
+            document.getElementById("hint2").innerText = `Hint 2: ${Number.isInteger(Math.sqrt(randomNumber)) ? "Perfect Square" : "Not a perfect square"}`;
+            document.getElementById("hint4").innerText = `Hint 3: ${getMultiplesHint(randomNumber)}`;
+            document.getElementById("hint5").innerText = `Hint 4: ${isPrime(randomNumber) ? "Prime Number" : "Not a Prime Number"}`;
 
-            if (attempts > 10) {
-                hint += ` 🤔 Try something closer to ${randomNumber > userGuess ? userGuess + Math.floor((maxNumber - userGuess) / 2) : userGuess - Math.floor(userGuess / 2)}!`;
-            }
+            let hint3 = document.getElementById("hint3");
+            hint3.innerText = `Hint 5: Your guess is ${userGuess > randomNumber ? "too high" : "too low"}`;
+            hint3.style.color = getRandomColor();
+            hint3.style.display = "block";
+            setTimeout(() => { hint3.style.display = "none"; }, 3000);
 
-            messageElement.innerText = hint;
+            message.innerText = "Incorrect! Try again.";
+        }
+
+        function getMultiplesHint(num) {
+            let multiples = [];
+            if (num % 2 === 0) multiples.push("2");
+            if (num % 3 === 0) multiples.push("3");
+            if (num % 5 === 0) multiples.push("5");
+            if (num % 7 === 0) multiples.push("7");
+            return multiples.length > 0 ? `Multiple of ${multiples.join(", ")}` : "No small factor multiples";
+        }
+
+        function isPrime(num) {
+            if (num < 2) return false;
+            for (let i = 2; i <= Math.sqrt(num); i++) {
+                if (num % i === 0) return false;
+            }
+            return true;
+        }
+
+        function getRandomColor() {
+            const colors = ["red", "blue", "green", "purple", "orange"];
+            return colors[Math.floor(Math.random() * colors.length)];
         }
 
         function resetGame() {
-            clearInterval(timer);
             randomNumber = Math.floor(Math.random() * maxNumber) + 1;
             attempts = 0;
-            gameActive = true;
-            startTimer();
+            clearInterval(timer);
+            document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
             document.getElementById("message").innerText = "";
+            document.getElementById("hint1").innerText = "";
+            document.getElementById("hint2").innerText = "";
+            document.getElementById("hint3").innerText = "";
+            document.getElementById("hint3").style.display = "none";
+            document.getElementById("hint4").innerText = "";
+            document.getElementById("hint5").innerText = "";
             document.getElementById("playAgain").style.display = "none";
         }
 
-        document.getElementById("submitBtn").addEventListener("click", checkGuess);
-        resetGame();
+        function updateLeaderboard(time) {
+            leaderboard.push(time);
+            leaderboard.sort((a, b) => b - a);
+            document.getElementById("leaderboard").innerText = "Best Times: " + leaderboard.slice(0, 5).join("s, ") + "s";
+        }
     </script>
 
 </body>
