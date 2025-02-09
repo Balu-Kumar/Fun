@@ -35,57 +35,121 @@
             font-size: 20px;
             font-weight: bold;
         }
+        #timer {
+            font-size: 18px;
+            color: red;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🎯 Guess the Number! 🎲</h1>
-    <p>I'm thinking of a number between 1 and 100. Can you guess it?</p>
+    <h1>🎯 Guess the Number Game! 🎲</h1>
+    <p>Choose a difficulty level:</p>
+    <button onclick="setDifficulty(50)">Easy (1-50)</button>
+    <button onclick="setDifficulty(100)">Medium (1-100)</button>
+    <button onclick="setDifficulty(500)">Hard (1-500)</button>
+
+    <p id="difficultyText"></p>
+    <p id="timer"></p>
 
     <input type="number" id="guess" placeholder="Enter a number">
     <button id="submitBtn">Submit</button>
     <p id="message"></p>
+    <p>🎖️ Best Score: <span id="bestScore">-</span> attempts</p>
+
+    <button id="playAgain" onclick="resetGame()" style="display:none;">🔄 Play Again</button>
 
     <script>
-        let randomNumber = Math.floor(Math.random() * 100) + 1;
+        let maxNumber = 100;
+        let randomNumber;
         let attempts = 0;
+        let bestScore = localStorage.getItem("bestScore") || "-";
+        let timer;
+        let timeLeft = 60;
+        let gameActive = false;
+
+        document.getElementById("bestScore").innerText = bestScore;
+
+        function setDifficulty(max) {
+            maxNumber = max;
+            resetGame();
+            document.getElementById("difficultyText").innerText = `Difficulty: Guess a number between 1 and ${maxNumber}`;
+            gameActive = true;
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 60;
+            document.getElementById("timer").innerText = `⏳ Time Left: ${timeLeft}s`;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = `⏳ Time Left: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    document.getElementById("message").innerText = "⏰ Time's up! You lost!";
+                    gameActive = false;
+                    document.getElementById("playAgain").style.display = "inline";
+                }
+            }, 1000);
+        }
 
         function isPerfectSquare(num) {
             return Number.isInteger(Math.sqrt(num));
         }
 
         function checkGuess() {
-            let guessInput = document.getElementById("guess");
-            let userGuess = parseInt(guessInput.value);
+            if (!gameActive) return;
+
+            let userGuess = parseInt(document.getElementById("guess").value);
             let messageElement = document.getElementById("message");
             attempts++;
 
-            if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
-                messageElement.innerText = "❌ Please enter a valid number between 1 and 100!";
+            if (isNaN(userGuess) || userGuess < 1 || userGuess > maxNumber) {
+                messageElement.innerText = "❌ Please enter a valid number!";
                 return;
             }
 
             if (userGuess === randomNumber) {
+                clearInterval(timer);
                 messageElement.innerText = `🎉 Correct! The number was ${randomNumber}. You guessed it in ${attempts} tries!`;
+                document.getElementById("playAgain").style.display = "inline";
+                gameActive = false;
+
+                if (bestScore === "-" || attempts < bestScore) {
+                    localStorage.setItem("bestScore", attempts);
+                    document.getElementById("bestScore").innerText = attempts;
+                }
                 return;
             }
 
             let hint = "";
-
-            if (attempts % 3 === 0) { // Every 3rd attempt, show high or low
+            if (attempts === 1) {
+                hint = (randomNumber % 2 === 0) ? "🔢 It's even!" : "🔢 It's odd!";
+            } else if (attempts === 2) {
+                hint = isPerfectSquare(randomNumber) ? "🟢 It's a perfect square!" : "❌ Not a perfect square!";
+            } else {
                 hint = userGuess < randomNumber ? "📉 Too low!" : "📈 Too high!";
-            } else { // Otherwise, give odd/even or perfect square hint
-                hint = (randomNumber % 2 === 0) ? "🔢 It's an even number!" : "🔢 It's an odd number!";
-                
-                if (Math.random() < 0.5) { // 50% chance to say perfect square
-                    hint += isPerfectSquare(randomNumber) ? " 🟢 It's a perfect square!" : " ❌ Not a perfect square!";
-                }
+            }
+
+            if (attempts > 10) {
+                hint += ` 🤔 Try something closer to ${randomNumber > userGuess ? userGuess + Math.floor((maxNumber - userGuess) / 2) : userGuess - Math.floor(userGuess / 2)}!`;
             }
 
             messageElement.innerText = hint;
         }
 
+        function resetGame() {
+            clearInterval(timer);
+            randomNumber = Math.floor(Math.random() * maxNumber) + 1;
+            attempts = 0;
+            gameActive = true;
+            startTimer();
+            document.getElementById("message").innerText = "";
+            document.getElementById("playAgain").style.display = "none";
+        }
+
         document.getElementById("submitBtn").addEventListener("click", checkGuess);
+        resetGame();
     </script>
 
 </body>
