@@ -50,6 +50,10 @@
         let randomNumber = Math.floor(Math.random() * 100) + 1;
         let attempts = 0;
 
+        function isPerfectSquare(num) {
+            return Number.isInteger(Math.sqrt(num));
+        }
+
         function checkGuess() {
             let userGuess = parseInt(document.getElementById("guess").value);
             attempts++;
@@ -60,14 +64,4 @@
             }
 
             if (userGuess === randomNumber) {
-                document.getElementById("message").innerText = `🎉 Correct! The number was ${randomNumber}. You guessed it in ${attempts} tries!`;
-            } else if (userGuess < randomNumber) {
-                document.getElementById("message").innerText = "📉 Too low! Try again.";
-            } else {
-                document.getElementById("message").innerText = "📈 Too high! Try again.";
-            }
-        }
-    </script>
-
-</body>
-</html>
+                document.getElementById("message").innerText = `🎉 C
