@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Number Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎯 Guess the Number! 🎲</h1>
+    <p>I'm thinking of a number between 1 and 100. Can you guess it?</p>
+
+    <input type="number" id="guess" placeholder="Enter a number">
+    <button onclick="checkGuess()">Submit</button>
+    <p id="message"></p>
+
+    <script>
+        let randomNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+
+        function checkGuess() {
+            let userGuess = parseInt(document.getElementById("guess").value);
+            attempts++;
+
+            if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
+                document.getElementById("message").innerText = "❌ Please enter a valid number between 1 and 100!";
+                return;
+            }
+
+            if (userGuess === randomNumber) {
+                document.getElementById("message").innerText = `🎉 Correct! The number was ${randomNumber}. You guessed it in ${attempts} tries!`;
+            } else if (userGuess < randomNumber) {
+                document.getElementById("message").innerText = "📉 Too low! Try again.";
+            } else {
+                document.getElementById("message").innerText = "📈 Too high! Try again.";
+            }
+        }
+    </script>
+
+</body>
+</html>
